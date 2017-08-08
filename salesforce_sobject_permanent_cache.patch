@@ -1,0 +1,42 @@
+diff --git a/includes/salesforce.inc b/includes/salesforce.inc
+index 0cdd8ab..988facf 100644
+--- a/includes/salesforce.inc
++++ b/includes/salesforce.inc
+@@ -381,14 +381,14 @@ class Salesforce {
+    */
+   public function objects($conditions = array('updateable' => TRUE), $reset = FALSE) {
+     $cache = cache_get('salesforce_objects');
+-    // Force the recreation of the cache when it is older than 5 minutes.
+-    if ($cache && REQUEST_TIME < ($cache->created + 300) && !$reset) {
++    // Force the recreation of the cache when it is older than 6 hours.
++    if ($cache && REQUEST_TIME < ($cache->created + variable_get('salesforce_sobject_cache_lifetime', 21600)) && !$reset) {
+       $result = $cache->data;
+     }
+     else {
+       $result = $this->apiCall('sobjects');
+       // Allow the cache to clear at any time by not setting an expire time.
+-      cache_set('salesforce_objects', $result, 'cache', CACHE_TEMPORARY);
++      cache_set('salesforce_objects', $result, 'cache', CACHE_PERMANENT);
+     }
+ 
+     if (!empty($conditions)) {
+@@ -441,8 +441,8 @@ class Salesforce {
+       return array();
+     }
+     $cache = cache_get($name, 'cache_salesforce_object');
+-    // Force the recreation of the cache when it is older than 5 minutes.
+-    if ($cache && REQUEST_TIME < ($cache->created + 300) && !$reset) {
++    // Force the recreation of the cache when it is older than 6 hours.
++    if ($cache && REQUEST_TIME < ($cache->created + variable_get('salesforce_sobject_cache_lifetime', 21600)) && !$reset) {
+       return $cache->data;
+     }
+     else {
+@@ -458,7 +458,7 @@ class Salesforce {
+           WATCHDOG_ERROR);
+         // If we failed to load new data re-save the previously cached object data
+         if ($cache) {
+-          cache_set($name, $cache->data, 'cache_salesforce_object');
++          cache_set($name, $cache->data, 'cache_salesforce_object', CACHE_PERMANENT);
+           return $cache->data;
+         }
+         // Nothing cached, return an empty fields array to avoid errors with other modules
